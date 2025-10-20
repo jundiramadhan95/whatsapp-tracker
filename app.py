@@ -7,7 +7,15 @@ print("✅ Flask app initialized")
 app = Flask(__name__)
 df_global = pd.DataFrame()
 
-@app.route('/whatsapp', methods=['POST'])
+@app.route('/whatsapp', methods=['GET', 'POST'])
+def whatsapp():
+    if request.method == 'POST':
+        # Simpan data
+        return "✅ Data diterima", 200
+    else:
+        # Kirim data ke dashboard
+        return jsonify(data), 200
+
 def receive_message():
     global df_global
     data = request.json
