@@ -22,7 +22,11 @@ try:
 
     for i in data:
         try:
-            dt = datetime.strptime(i["time"], "%Y-%m-%dT%H:%M:%S.%fZ").astimezone()
+            dt = pd.to_datetime(i.get("datetime") or i.get("timestamp"), errors="coerce")
+            if pd.isna(dt):
+                continue
+            jam.append(dt.strftime("%H:%M:%S"))
+            tanggal.append(dt.strftime("%Y-%m-%d"))
             jam.append(dt.strftime("%H:%M:%S"))
             tanggal.append(dt.strftime("%Y-%m-%d"))
             author_name.append(i.get("author_name", "Unknown"))
