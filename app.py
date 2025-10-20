@@ -10,11 +10,23 @@ df_global = pd.DataFrame()
 @app.route('/whatsapp', methods=['GET', 'POST'])
 def whatsapp():
     if request.method == 'POST':
-        # Simpan data
+        # Simpan data dari client
         return "✅ Data diterima", 200
     else:
         # Kirim data ke dashboard
-        return jsonify(data), 200
+        dummy_data = [
+            {
+                "time": "2023-06-06T08:15:00.000Z",
+                "author_name": "admin",
+                "message": "Halo dari server!"
+            },
+            {
+                "time": "2023-06-06T08:16:00.000Z",
+                "author_name": "user1",
+                "message": "Siap!"
+            }
+        ]
+        return jsonify(dummy_data), 200
 
 def receive_message():
     global df_global
