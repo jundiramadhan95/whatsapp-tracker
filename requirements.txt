@@ -1,7 +1,2 @@
 flask
-pandas
-streamlit
-streamlit-autorefresh
-pytz
-requests
 gunicorn
