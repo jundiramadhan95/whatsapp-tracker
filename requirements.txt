@@ -4,3 +4,4 @@ streamlit
 streamlit-autorefresh
 pytz
 requests
+gunicorn

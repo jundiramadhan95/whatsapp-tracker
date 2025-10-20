@@ -23,5 +23,5 @@ def get_dataframe():
     global df_global
     return jsonify(df_global.to_dict(orient='records'))
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+# if __name__ == '__main__':
+#     app.run(host='0.0.0.0', port=5000)
