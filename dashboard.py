@@ -1,35 +1,54 @@
 import pandas as pd
 import streamlit as st
-import pytz
 import requests
 from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
 
-st.set_page_config(page_title="📊 WhatsApp Tracker", layout="wide")
-st_autorefresh(interval=10000, limit=None, key="refresh")
+st.set_page_config(page_title="Whatsapp Tracker", layout="wide")
+st.title("📲 Whatsapp Tracker Dashboard")
 
-URL = "https://whatsapp-tracker-production.up.railway.app/whatsapp"  # Ganti dengan Railway URL jika sudah deploy
+# Auto-refresh setiap 10 detik, maksimal 100 kali
+st_autorefresh(interval=10000, limit=100, key="data_refresh")
+
+url = "https://whatsapp-tracker-production.up.railway.app/whatsapp"
 
 try:
-    response = requests.get(URL)
+    response = requests.get(url)
+    response.raise_for_status()
     data = response.json()
-    df = pd.DataFrame(data)
 
-    jakarta_tz = pytz.timezone('Asia/Jakarta')
-    df['datetime'] = pd.to_datetime(df['timestamp'], unit='s').dt.tz_localize('UTC').dt.tz_convert(jakarta_tz)
-    df['tanggal'] = df['datetime'].dt.date
-    df['jam'] = df['datetime'].dt.strftime('%H:%M:%S')
+    # Parsing data
+    jam, tanggal, author_name, message = [], [], [], []
 
-    st.title("📥 WhatsApp Message Dashboard")
-    group = st.sidebar.selectbox("Pilih Grup", df['group_name'].dropna().unique())
-    author = st.sidebar.selectbox("Pilih Pengirim", df[df['group_name'] == group]['author_name'].dropna().unique())
+    for i in data:
+        try:
+            dt = datetime.strptime(i["time"], "%Y-%m-%dT%H:%M:%S.%fZ").astimezone()
+            jam.append(dt.strftime("%H:%M:%S"))
+            tanggal.append(dt.strftime("%Y-%m-%d"))
+            author_name.append(i.get("author_name", "Unknown"))
+            message.append(i.get("message", ""))
+        except Exception:
+            continue
 
-    filtered = df[(df['group_name'] == group) & (df['author_name'] == author)]
+    df = pd.DataFrame({
+        "Jam": jam,
+        "Tanggal": tanggal,
+        "Author Name": author_name,
+        "Message": message
+    })
 
-    st.metric("Jumlah Pesan", len(filtered))
-    st.dataframe(filtered[['tanggal', 'jam', 'body']], use_container_width=True)
-    st.bar_chart(filtered['tanggal'].value_counts().sort_index())
-    st.caption(f"Terakhir update: {datetime.now(jakarta_tz).strftime('%Y-%m-%d %H:%M:%S WIB')}")
+    # Total pesan per author
+    st.subheader("📊 Total Message per Author")
+    total_message = df.groupby("Author Name")["Message"].count().reset_index()
+    total_message.columns = ["Author Name", "Total Message"]
+    st.dataframe(total_message)
+
+    # Filter dinamis
+    st.subheader("🔍 Filtered Message")
+    selected_date = st.selectbox("Pilih Tanggal", sorted(df["Tanggal"].unique(), reverse=True))
+    selected_author = st.selectbox("Pilih Author", sorted(df["Author Name"].unique()))
+    filtered_df = df[(df["Tanggal"] == selected_date) & (df["Author Name"] == selected_author)]
+    st.dataframe(filtered_df)
 
 except Exception as e:
-    st.error(f"Gagal ambil data: {e}")
+    st.error(f"❌ Gagal ambil data: {e}")
